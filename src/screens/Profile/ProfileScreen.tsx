@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 14,
     color: '#666',
-    marginTop: 6,
+    marginTop: 8,
   },
   statDate: {
     fontSize: 12,
