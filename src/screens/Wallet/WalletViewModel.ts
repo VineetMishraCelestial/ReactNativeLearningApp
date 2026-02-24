@@ -1,40 +1,46 @@
-import { useState } from 'react';
-import { client } from '../../graphql/apolloClient';
-import { GET_COUNTRIES } from '../../graphql/queries/countries';
+import { useState } from "react";
+import { client } from "../../graphql/apolloClient";
+import { GET_PRODUCTS } from "../../graphql/queries/products";
 
-type Country = {
-  code: string;
-  name: string;
-  emoji: string;
+type Product = {
+  id: number;
+  title: string;
+  price: number;
+  description: string;
+  images: string[];
+  slug: string;
+  creationAt: string;
 };
 
-// type GetCountriesResponse = {
-//   countries: Country[];
-// };
+type GetProductsResponse = {
+  products: Product[];
+};
 
-type GetCountriesResponse = {
-    countries: {
-      code: string;
-      name: string;
-      emoji: string;
-    }[];
-  };
+const LIMIT = 10;
 
 export const useWalletViewModel = () => {
-  const [countries, setCountries] = useState<Country[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchCountries = async () => {
+  const fetchProducts = async () => {
     setLoading(true);
     setError(null);
-  
+
     try {
-      const { data } = await client.query<GetCountriesResponse>({
-        query: GET_COUNTRIES,
+      const { data } = await client.query<GetProductsResponse>({
+        query: GET_PRODUCTS,
+        variables: {
+          limit: LIMIT,
+          offset: 0,
+        },
+        fetchPolicy: "network-only",
       });
-  
-      setCountries(data?.countries ?? []);
+
+      setProducts(data?.products ?? []);
+      setHasMore((data?.products?.length ?? 0) === LIMIT);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -42,5 +48,88 @@ export const useWalletViewModel = () => {
     }
   };
 
-  return { countries, fetchCountries, loading, error };
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+
+    try {
+      const { data } = await client.query<GetProductsResponse>({
+        query: GET_PRODUCTS,
+        variables: {
+          limit: LIMIT,
+          offset: products.length,
+        },
+      });
+
+      const newProducts = data?.products ?? [];
+
+      setProducts(prev => [...prev, ...newProducts]);
+
+      if (newProducts.length < LIMIT) {
+        setHasMore(false);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  return {
+    products,
+    fetchProducts,
+    loadMore,
+    loading,
+    loadingMore,
+    error,
+  };
 };
+
+
+// import { useState } from 'react';
+// import { client } from '../../graphql/apolloClient';
+// import { GET_COUNTRIES } from '../../graphql/queries/countries';
+
+// type Country = {
+//   code: string;
+//   name: string;
+//   emoji: string;
+// };
+
+// // type GetCountriesResponse = {
+// //   countries: Country[];
+// // };
+
+// type GetCountriesResponse = {
+//     countries: {
+//       code: string;
+//       name: string;
+//       emoji: string;
+//     }[];
+//   };
+
+// export const useWalletViewModel = () => {
+//   const [countries, setCountries] = useState<Country[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+
+//   const fetchCountries = async () => {
+//     setLoading(true);
+//     setError(null);
+  
+//     try {
+//       const { data } = await client.query<GetCountriesResponse>({
+//         query: GET_COUNTRIES,
+//       });
+  
+//       setCountries(data?.countries ?? []);
+//     } catch (err: any) {
+//       setError(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return { countries, fetchCountries, loading, error };
+// };
