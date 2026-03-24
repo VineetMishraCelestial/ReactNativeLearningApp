@@ -55,15 +55,15 @@ export const useLoginViewModel = () => {
         },
       });
       console.log('GraphQL Full Response:', data);
-      // const accessToken = data?.login.access_token;
-      // const refreshToken = data?.login.refresh_token;
+      const accessToken = data?.login.access_token;
+      const refreshToken = data?.login.refresh_token;
 
-      // if (!accessToken || !refreshToken) {
-      //   throw new Error('Invalid login response');
-      // }
+      if (!accessToken || !refreshToken) {
+        throw new Error('Invalid login response');
+      }
 
-      // // Save tokens securely
-      // await authStorage.setTokens(accessToken, refreshToken);
+      // Save tokens securely
+      await authStorage.setTokens(accessToken, refreshToken);
 
       setError(null);
       return true;
